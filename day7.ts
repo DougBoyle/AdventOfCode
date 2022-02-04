@@ -1,21 +1,5 @@
 const { read } = require("./fileReader");
 
-const readline = require('readline');
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-const getLine = (function () {
-    const getLineGen = (async function* () {
-        for await (const line of rl) {
-            yield line;
-        }
-    })();
-    return async () => ((await getLineGen.next()).value);
-})();
-
-
 class Amp {
     pc: number;
     code: number[];
@@ -99,7 +83,6 @@ class Amp {
     }
 }
 
-// fake input, so no longer async
 export function run(code: number[], input: number[]): number {
     let pc = 0;
     let inputIndex = 0;
@@ -109,7 +92,7 @@ export function run(code: number[], input: number[]): number {
         const [opcode, mode1, mode2, mode3] = splitOpcode(v);
         switch (opcode) {
             case 99: {
-                throw "Expected early return on output"; // TODO: Indicate a halt
+                throw "Expected early return on output";
            //     return;
             }
             case 1: {
@@ -207,21 +190,20 @@ function getArg(pc: number, code: number[]): number {
 export function runAmps(code: number[], amps: number[]): number {
     var output = 0;
     var finalOutput = 0;
-    var machines = [[...code], [...code], [...code], [...code], [...code]]
-        .map(code => new Amp(code));
+    var machines = amps.map(_ => new Amp([...code]));
     try { // exception thrown when machine halts
         // first pass - include amp settings
-        for (var i = 0; i < 5; i++) { // TODO: Feed back in at start
+        for (var i = 0; i < amps.length; i++) {
             output = machines[i].run([amps[i], output]);
         } 
         finalOutput = output;
         while (true) {
-            for (var i = 0; i < 5; i++) { // TODO: Feed back in at start
+            for (var i = 0; i < amps.length; i++) {
                 output = machines[i].run([output]);
             } 
             finalOutput = output;
         }
-    } catch {} //(e) { console.log(e); }
+    } catch {}
     return finalOutput;
 }
 
@@ -244,7 +226,7 @@ function* permutations(inputArr: number[]): Generator<number[]> {
 }
 
 
-function findBest() {
+export function findBest() {
     const code = read('./day7input.txt');
     var best = 0;
     for (let amps of permutations(ampSettings)) {
@@ -256,5 +238,3 @@ function findBest() {
 
     console.log(best);
 }
-
-findBest();
