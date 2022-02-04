@@ -1,2 +1,3 @@
-const  { findBest } = require('./day7');
-findBest();
+const  { boostTest } = require('./day9');
+
+boostTest();
