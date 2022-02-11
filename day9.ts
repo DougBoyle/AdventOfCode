@@ -2,7 +2,7 @@ import { AddressMode, Opcode } from "./opcodes";
 
 const { read } = require("./fileReader");
 
-class Amp {
+export class Machine {
     pc: bigint = 0n;
     baseAddress: bigint = 0n;
     code: Map<bigint, bigint>;
@@ -43,7 +43,7 @@ class Amp {
                     const dest = this.getPointer(this.pc++, mode1);
                     if (this.inputIndex >= this.input.length) throw "Ran out of inputs";
                     const value = this.input[this.inputIndex++]; // fake reading input
-                    console.log(`Read input ${value}`);
+                   // console.log(`Read input ${value}`);
                     code.set(dest, value);
                     break;
                 }
@@ -124,17 +124,17 @@ function splitOpcode(valueBigInt: bigint): [Opcode, AddressMode, AddressMode, Ad
 }
 
 export function runMachineWithInput(code: bigint[], input: bigint[]) {
-    var machine = new Amp(code);
+    var machine = new Machine(code);
     machine.input = input;
     for (let value of machine.run()) {
         console.log(value);
     }
 }
 
-export function runAmps(code: bigint[], amps: bigint[]): bigint {
+export function runMachines(code: bigint[], amps: bigint[]): bigint {
     var output = 0n;
     var finalOutput = 0n;
-    var machines = amps.map(_ => new Amp([...code]));
+    var machines = amps.map(_ => new Machine([...code]));
     var generators: Generator<bigint>[] = [];
     try { // exception thrown when machine halts
         // first pass - include amp settings

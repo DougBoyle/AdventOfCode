@@ -1,3 +1,3 @@
-const  { boostTest } = require('./day9');
+const  { run } = require('./day11');
 
-boostTest();
+run();
