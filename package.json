@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "jetty": "^0.2.1"
+  }
+}

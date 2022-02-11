@@ -8,9 +8,11 @@ export class Machine {
     code: Map<bigint, bigint>;
     input: bigint[] = [];
     inputIndex: number = 0;
+    getInput: () => bigint;
 
-    constructor(code: bigint[]) {
+    constructor(code: bigint[], getInput: () => bigint) {
         this.code = new Map();
+        this.getInput = getInput;
         for (let i = 0; i < code.length; i++) {
             this.code.set(BigInt(i), code[i]);
         }
@@ -41,8 +43,8 @@ export class Machine {
                 }
                 case Opcode.Input: {
                     const dest = this.getPointer(this.pc++, mode1);
-                    if (this.inputIndex >= this.input.length) throw "Ran out of inputs";
-                    const value = this.input[this.inputIndex++]; // fake reading input
+            //        if (this.inputIndex >= this.input.length) throw "Ran out of inputs";
+                    const value = this.getInput(); // this.input[this.inputIndex++]; // fake reading input
                    // console.log(`Read input ${value}`);
                     code.set(dest, value);
                     break;
@@ -123,6 +125,7 @@ function splitOpcode(valueBigInt: bigint): [Opcode, AddressMode, AddressMode, Ad
     return [opcode, mode1, mode2, mode3];
 }
 
+/*
 export function runMachineWithInput(code: bigint[], input: bigint[]) {
     var machine = new Machine(code);
     machine.input = input;
@@ -159,3 +162,4 @@ export function boostTest() {
     const code = read('./day9input.txt');
     runMachineWithInput(code, [2n]);
 }
+*/

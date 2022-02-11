@@ -1,4 +1,3 @@
-//import { Machine } from "./day9";
 const { Machine } = require("./day9");
 const { read } = require("./fileReader");
 
