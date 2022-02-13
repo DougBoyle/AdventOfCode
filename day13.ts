@@ -23,30 +23,42 @@ function getInput(): bigint {
     return ballPosition > paddlePosition ? 1n : ballPosition < paddlePosition ? -1n : 0n;
 }
 
-export async function populateGame(code: bigint[]) {
+class SquareDictionary {
+    dict = new Set<String>();
+
+    contains(square: [number, number]) {
+        return this.dict.has(this.squareToString(square));
+    }
+
+    add(square: [number, number]) {
+        this.dict.add(this.squareToString(square));
+    }
+
+    remove(square: [number, number]) {
+        this.dict.delete(this.squareToString(square));
+    }
+
+    squareToString(square: [number, number]) {
+        return square.join(",");
+    }
+}
+
+export async function populateGame(code: bigint[]): Promise<number> {
     const machine = new Machine(code, getInput);
-    const machineInput: bigint[] = machine.input;
     const machineOutput = machine.run();
-    var lastInput = 0;
-    
+    const bricks = new SquareDictionary();
+    let score = 0;
 
     var tileInfo: [number, number, number] | undefined;
     while (tileInfo = readXYTileId(machineOutput)) {
-     //   if (machine.inputIndex != lastInput) {
-     //       lastInput = machine.inputIndex;
-     //       await delay(200);
-     //   }
-      //  while (machine.inputIndex >= machineInput.length) {
-      //      machineInput.push(ballPosition > paddlePosition ? 1n : ballPosition < paddlePosition ? -1n : 0n);
-      //  }
+
         if (gotInput) {
             gotInput = false;
-            await delay(10);
+            await delay(5);
         }
         const [x, y, tileId] = tileInfo;
         if (x === -1 && y === 0) {
-            // await delay(500);
-            // console.log(`Score ${tileId}`);
+            score = tileId;
         } else {
             if (tileId === 3) {
                 paddlePosition = x;
@@ -57,6 +69,7 @@ export async function populateGame(code: bigint[]) {
             drawTile(x, y, tileId);
         }
     }
+    return score;
 }
 
 function drawTile(x: number, y: number, tileId: number) {
@@ -94,21 +107,10 @@ export function run() {
     const code = read('./day13input.txt');
     code[0] = 2;
   
-    populateGame(code);
-
-    jetty.moveTo([maxWindowHeight + 10, 0]);
-
-
-  //  process.stdout.write("Hello world!\nHello\nHello");
-  //  process.stdout.cursorTo(0);
-  //  process.stdout.write("Goodbye");
-
-    /*
-    jetty.text("hello world\n hello hello \n hellow world");
-    jetty.moveTo([2,0]);
-    jetty.text("hello panda");
-    jetty.moveTo([2, 20]);
-    jetty.text('hi');
-    jetty.moveTo([5,0]);
-    */
+    populateGame(code).then(
+        result => {
+            jetty.moveTo([maxWindowHeight + 10, 0]);
+            console.log(`Final score: ${result}`);
+        }
+    );
 }
