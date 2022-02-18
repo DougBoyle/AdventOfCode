@@ -6,8 +6,6 @@ export class Machine {
     pc: bigint = 0n;
     baseAddress: bigint = 0n;
     code: Map<bigint, bigint>;
-    input: bigint[] = [];
-    inputIndex: number = 0;
     getInput: () => bigint;
 
     constructor(code: bigint[], getInput: () => bigint) {
@@ -43,14 +41,14 @@ export class Machine {
                 }
                 case Opcode.Input: {
                     const dest = this.getPointer(this.pc++, mode1);
-            //        if (this.inputIndex >= this.input.length) throw "Ran out of inputs";
-                    const value = this.getInput(); // this.input[this.inputIndex++]; // fake reading input
-                   // console.log(`Read input ${value}`);
+                    const value = this.getInput();
+              //      console.log(`Machine read input ${this.getInput()}`);
                     code.set(dest, value);
                     break;
                 }
                 case Opcode.Output: {
                     const value = this.getArg(this.pc++, mode1);
+               //     console.log(`Machine wrote output ${value}`);
                     yield value;
                     break;
                 }
@@ -125,10 +123,14 @@ function splitOpcode(valueBigInt: bigint): [Opcode, AddressMode, AddressMode, Ad
     return [opcode, mode1, mode2, mode3];
 }
 
-/*
+function arrayAsInput(input: bigint[]): () => bigint {
+    let inputIndex = 0;
+    return () => input[inputIndex++];
+}
+
+
 export function runMachineWithInput(code: bigint[], input: bigint[]) {
-    var machine = new Machine(code);
-    machine.input = input;
+    var machine = new Machine(code, arrayAsInput(input));
     for (let value of machine.run()) {
         console.log(value);
     }
@@ -137,17 +139,22 @@ export function runMachineWithInput(code: bigint[], input: bigint[]) {
 export function runMachines(code: bigint[], amps: bigint[]): bigint {
     var output = 0n;
     var finalOutput = 0n;
-    var machines = amps.map(_ => new Machine([...code]));
+    var inputArrays = amps.map(n => [n]);
+    var machines: Machine[] = [];
+    for (var i = 0; i < amps.length; i++) {
+        machines.push(new Machine([...code], arrayAsInput(inputArrays[i])));
+    }
+
     var generators: Generator<bigint>[] = [];
     try { // exception thrown when machine halts
         // first pass - include amp settings
         for (var i = 0; i < amps.length; i++) {
-            machines[i].input.push(amps[i]);
+            inputArrays[i].push(amps[i]);
             generators.push(machines[i].run())
         } 
         while (true) {
             for (var i = 0; i < amps.length; i++) {
-                machines[i].input.push(output);
+                inputArrays[i].push(output);
                 var value = generators[i].next();
                 if (value.done) return finalOutput;
                 else output = value.value;
@@ -162,4 +169,3 @@ export function boostTest() {
     const code = read('./day9input.txt');
     runMachineWithInput(code, [2n]);
 }
-*/

@@ -23,6 +23,15 @@ function getInput(): bigint {
     return ballPosition > paddlePosition ? 1n : ballPosition < paddlePosition ? -1n : 0n;
 }
 
+enum Tile {
+    EMPTY = 0,
+    WALL = 1,
+    BLOCK = 2,
+    PADDLE = 3,
+    BALL = 4
+}
+
+
 class SquareDictionary {
     dict = new Set<String>();
 
@@ -60,9 +69,9 @@ export async function populateGame(code: bigint[]): Promise<number> {
         if (x === -1 && y === 0) {
             score = tileId;
         } else {
-            if (tileId === 3) {
+            if (tileId === Tile.PADDLE) {
                 paddlePosition = x;
-            } else if (tileId == 4) {
+            } else if (tileId == Tile.BALL) {
                 ballPosition = x;
             }
             maxWindowHeight = Math.max(y, maxWindowHeight);
@@ -74,19 +83,19 @@ export async function populateGame(code: bigint[]): Promise<number> {
 
 function drawTile(x: number, y: number, tileId: number) {
     switch (tileId) {
-        case 0:
+        case Tile.EMPTY:
             drawSymbol(x, y, ' ');
             return;
-        case 1:
+        case Tile.WALL:
             drawSymbol(x, y, '#');
             return;
-        case 2: 
+        case Tile.BLOCK: 
             drawSymbol(x, y, 'X');
             return;
-        case 3: 
+        case Tile.PADDLE: 
             drawSymbol(x, y, '-');
             return;
-        case 4:
+        case Tile.BALL:
             drawSymbol(x, y, 'O');
             return;
     }
