@@ -1,4 +1,4 @@
-import { Square, SquareDictionary, squareToString } from "./squareDictionary";
+import { Square, SquareDictionary } from "./squareDictionary";
 
 import { Machine } from "./day9";
 const { read } = require("./fileReader");
@@ -46,7 +46,7 @@ type stackEntry = [Direction[], Direction|undefined];
 let oxygenSquare: Square;
 
 function search(maze: SquareDictionary, startSquare: Square): number {
-    const stack: stackEntry[] = [[[1, 2, 3, 4], undefined]]; // (backtracking definition here is meaningless)
+    const stack: stackEntry[] = [[[1, 2, 3, 4], undefined]];
     let currentSquare = startSquare;
 
     var nextStackEntry: stackEntry | undefined;
@@ -54,38 +54,14 @@ function search(maze: SquareDictionary, startSquare: Square): number {
         currentSquare = exploreSquare(stack, maze, currentSquare, nextStackEntry);
     }
 
-    // Now search from start square to oxygen
-    let frontier = new SquareDictionary();
-    frontier.set(startSquare, 0);
-    let minDepths = new SquareDictionary();
-    minDepths.set(startSquare, 0);
+    const [distancesFromStart, _] = computeDijkstraWithFurthest(maze, startSquare);
+    console.log(`Shortest distance to Oxygen: ${distancesFromStart.get(oxygenSquare)}`);
 
-    var minSquare: [Square, number] | undefined;
-    while (minSquare = frontier.popMin()) {
-        const [square, depth] = minSquare;
-        console.log(`Popped square ${squareToString(square)}, depth ${depth}`);
-        const newDepth = depth + 1;
-        if (maze.get(square) == Tile.OXYGEN) {
-            return furthestSquare(maze, square);
-        }
-        for (var dir = 1; dir <= 4; dir++) {
-            const nextSquare = neighbour(square, dir);
-            var cell = maze.get(nextSquare);
-            if (cell == Tile.EMPTY || cell == Tile.OXYGEN) {
-                const oldDepth = minDepths.get(nextSquare);
-                console.log(`Square ${squareToString(nextSquare)} had depth ${oldDepth} vs new depth ${newDepth}`);
-                if (oldDepth === undefined || oldDepth > newDepth) {
-                    minDepths.set(nextSquare, newDepth);
-                    frontier.set(nextSquare, newDepth);
-                }
-            }
-        }
-    }
+    return computeDijkstraWithFurthest(maze, oxygenSquare)[1];
 
-    throw "Could not find depth of oxygen square"
 }
 
-function furthestSquare(maze: SquareDictionary, startSquare: Square): number {
+function computeDijkstraWithFurthest(maze: SquareDictionary, startSquare: Square): [SquareDictionary, number] {
     let furthestMinimum = 0;
 
     let frontier = new SquareDictionary();
@@ -102,7 +78,7 @@ function furthestSquare(maze: SquareDictionary, startSquare: Square): number {
         for (var dir = 1; dir <= 4; dir++) {
             const nextSquare = neighbour(square, dir);
             var cell = maze.get(nextSquare);
-            if (cell == Tile.EMPTY) {
+            if (cell == Tile.EMPTY || cell == Tile.OXYGEN) {
                 const oldDepth = minDepths.get(nextSquare);
                 if (oldDepth === undefined || oldDepth > newDepth) {
                     minDepths.set(nextSquare, newDepth);
@@ -112,7 +88,7 @@ function furthestSquare(maze: SquareDictionary, startSquare: Square): number {
         }
     }
 
-    return furthestMinimum;
+    return [minDepths, furthestMinimum];
 }
 
 function exploreSquare(stack: stackEntry[], maze: SquareDictionary, currentSquare: Square, stackEntry: stackEntry): Square {

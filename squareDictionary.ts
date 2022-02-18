@@ -25,10 +25,7 @@ export class SquareDictionary {
     }
 
     popMin(): [Square, number] | undefined {
-        console.log(`Entries ${Object.entries(this.dict).length}`);
-        console.log(`Has start square: ${this.get([0, 0])}`);
         const smallest: String = Array.from(this.dict.keys()).sort((k1, k2) => this.dict.get(k1)! - this.dict.get(k2)!)[0];
-        console.log(`Found smallest ${smallest}`);
         if (smallest == undefined) return undefined;
         const value = this.dict.get(smallest)!
         this.dict.delete(smallest);
