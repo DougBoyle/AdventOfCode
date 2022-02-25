@@ -31,6 +31,12 @@ export class SquareDictionary {
         this.dict.delete(smallest);
         return [this.stringToSquare(smallest), value];
     }
+
+    forEach(mapper: (square: Square, number: number) => void) {
+        this.dict.forEach(
+            (value, key) => mapper(this.stringToSquare(key), value)
+        );
+    }
 }
 
 export function squareToString(square: Square): String {
