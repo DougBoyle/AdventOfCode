@@ -6,9 +6,9 @@ export class Machine {
     pc: bigint = 0n;
     baseAddress: bigint = 0n;
     code: Map<bigint, bigint>;
-    getInput: () => bigint;
+    getInput: () => Promise<bigint>;
 
-    constructor(code: bigint[], getInput: () => bigint) {
+    constructor(code: bigint[], getInput: () => Promise<bigint>) {
         this.code = new Map();
         this.getInput = getInput;
         for (let i = 0; i < code.length; i++) {
@@ -16,7 +16,7 @@ export class Machine {
         }
     }
 
-    * run(): Generator<bigint> {
+    async* run(): AsyncGenerator<bigint> {
         let code = this.code;
         while (true) {
             const v = this.access(this.pc++);
@@ -41,7 +41,7 @@ export class Machine {
                 }
                 case Opcode.Input: {
                     const dest = this.getPointer(this.pc++, mode1);
-                    const value = this.getInput();
+                    const value = await this.getInput();
               //      console.log(`Machine read input ${this.getInput()}`);
                     code.set(dest, value);
                     break;
@@ -123,20 +123,20 @@ function splitOpcode(valueBigInt: bigint): [Opcode, AddressMode, AddressMode, Ad
     return [opcode, mode1, mode2, mode3];
 }
 
-function arrayAsInput(input: bigint[]): () => bigint {
+function arrayAsInput(input: bigint[]): () => Promise<bigint> {
     let inputIndex = 0;
-    return () => input[inputIndex++];
+    return () => Promise.resolve(input[inputIndex++]);
 }
 
 
-export function runMachineWithInput(code: bigint[], input: bigint[]) {
+export async function runMachineWithInput(code: bigint[], input: bigint[]) {
     var machine = new Machine(code, arrayAsInput(input));
-    for (let value of machine.run()) {
+    for await (let value of machine.run()) {
         console.log(value);
     }
 }
 
-export function runMachines(code: bigint[], amps: bigint[]): bigint {
+export async function runMachines(code: bigint[], amps: bigint[]): Promise<bigint> {
     var output = 0n;
     var finalOutput = 0n;
     var inputArrays = amps.map(n => [n]);
@@ -145,7 +145,7 @@ export function runMachines(code: bigint[], amps: bigint[]): bigint {
         machines.push(new Machine([...code], arrayAsInput(inputArrays[i])));
     }
 
-    var generators: Generator<bigint>[] = [];
+    var generators: AsyncGenerator<bigint>[] = [];
     try { // exception thrown when machine halts
         // first pass - include amp settings
         for (var i = 0; i < amps.length; i++) {
@@ -155,7 +155,7 @@ export function runMachines(code: bigint[], amps: bigint[]): bigint {
         while (true) {
             for (var i = 0; i < amps.length; i++) {
                 inputArrays[i].push(output);
-                var value = generators[i].next();
+                var value = await generators[i].next();
                 if (value.done) return finalOutput;
                 else output = value.value;
             } 
