@@ -7,6 +7,7 @@ export class Machine {
     baseAddress: bigint = 0n;
     code: Map<bigint, bigint>;
     getInput: () => Promise<bigint>;
+    finished: boolean = false;
 
     constructor(code: bigint[], getInput: () => Promise<bigint>) {
         this.code = new Map();
@@ -17,74 +18,79 @@ export class Machine {
     }
 
     async* run(): AsyncGenerator<bigint> {
-        let code = this.code;
-        while (true) {
-            const v = this.access(this.pc++);
-            const [opcode, mode1, mode2, mode3] = splitOpcode(v);
-            switch (opcode) {
-                case Opcode.Exit: {
-                    return;
-                }
-                case Opcode.Add: {
-                    const xVal = this.getArg(this.pc++, mode1);
-                    const yVal = this.getArg(this.pc++, mode2);
-                    const dest = this.getPointer(this.pc++, mode3);
-                    code.set(dest, xVal + yVal);
-                    break;
-                }
-                case Opcode.Mult: {
-                    const xVal = this.getArg(this.pc++, mode1);
-                    const yVal = this.getArg(this.pc++, mode2);
-                    const dest = this.getPointer(this.pc++, mode3);
-                    code.set(dest, xVal * yVal);
-                    break;
-                }
-                case Opcode.Input: {
-                    const dest = this.getPointer(this.pc++, mode1);
-                    const value = await this.getInput();
-              //      console.log(`Machine read input ${this.getInput()}`);
-                    code.set(dest, value);
-                    break;
-                }
-                case Opcode.Output: {
-                    const value = this.getArg(this.pc++, mode1);
-               //     console.log(`Machine wrote output ${value}`);
-                    yield value;
-                    break;
-                }
-                case Opcode.BNEZ: {
-                    const jump = this.getArg(this.pc++, mode1) !== 0n;
-                    const dest = this.getArg(this.pc++, mode2);
-                    if (jump) this.pc = dest;
-                    break;
-                }
-                case Opcode.BEQZ: {
-                    const jump = this.getArg(this.pc++, mode1) === 0n;
-                    const dest = this.getArg(this.pc++, mode2);
-                    if (jump) this.pc = dest;
-                    break;
-                }
-                case Opcode.SetLT: {
-                    const x = this.getArg(this.pc++, mode1);
-                    const y = this.getArg(this.pc++, mode2);
-                    const dest = this.getPointer(this.pc++, mode3);
-                    code.set(dest, x < y ? 1n : 0n);
-                    break;
-                }
-                case Opcode.SetEQ: {
-                    const x = this.getArg(this.pc++, mode1);
-                    const y = this.getArg(this.pc++, mode2);
-                    const dest = this.getPointer(this.pc++, mode3);
-                    code.set(dest, x === y ? 1n : 0n);
-                    break;
-                }
-                case Opcode.AdjustBase: {
-                    this.baseAddress += this.getArg(this.pc++, mode1);
-                    break;
-                }
-                default: {
-                    throw `Unrecognised opcode ${opcode}`;
-                }
+        while (!this.finished) {
+            const value = await this.step();
+            if (value !== undefined) yield value;
+        }
+    }
+
+    async step(): Promise<bigint | undefined> {
+        const code = this.code;
+        const v = this.access(this.pc++);
+        const [opcode, mode1, mode2, mode3] = splitOpcode(v);
+        switch (opcode) {
+            case Opcode.Exit: {
+                this.finished = true;
+                return;
+            }
+            case Opcode.Add: {
+                const xVal = this.getArg(this.pc++, mode1);
+                const yVal = this.getArg(this.pc++, mode2);
+                const dest = this.getPointer(this.pc++, mode3);
+                code.set(dest, xVal + yVal);
+                return;
+            }
+            case Opcode.Mult: {
+                const xVal = this.getArg(this.pc++, mode1);
+                const yVal = this.getArg(this.pc++, mode2);
+                const dest = this.getPointer(this.pc++, mode3);
+                code.set(dest, xVal * yVal);
+                return;
+            }
+            case Opcode.Input: {
+                const dest = this.getPointer(this.pc++, mode1);
+                const value = await this.getInput();
+            //      console.log(`Machine read input ${this.getInput()}`);
+                code.set(dest, value);
+                return;
+            }
+            case Opcode.Output: {
+                const value = this.getArg(this.pc++, mode1);
+            //     console.log(`Machine wrote output ${value}`);
+                return value;
+            }
+            case Opcode.BNEZ: {
+                const jump = this.getArg(this.pc++, mode1) !== 0n;
+                const dest = this.getArg(this.pc++, mode2);
+                if (jump) this.pc = dest;
+                return;
+            }
+            case Opcode.BEQZ: {
+                const jump = this.getArg(this.pc++, mode1) === 0n;
+                const dest = this.getArg(this.pc++, mode2);
+                if (jump) this.pc = dest;
+                return;
+            }
+            case Opcode.SetLT: {
+                const x = this.getArg(this.pc++, mode1);
+                const y = this.getArg(this.pc++, mode2);
+                const dest = this.getPointer(this.pc++, mode3);
+                code.set(dest, x < y ? 1n : 0n);
+                return;
+            }
+            case Opcode.SetEQ: {
+                const x = this.getArg(this.pc++, mode1);
+                const y = this.getArg(this.pc++, mode2);
+                const dest = this.getPointer(this.pc++, mode3);
+                code.set(dest, x === y ? 1n : 0n);
+                return;
+            }
+            case Opcode.AdjustBase: {
+                this.baseAddress += this.getArg(this.pc++, mode1);
+                return;
+            }
+            default: {
+                throw `Unrecognised opcode ${opcode}`;
             }
         }
     }

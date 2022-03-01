@@ -13,7 +13,6 @@ const rl = readline.createInterface({
 export function run() {
     const code = read('./day21input.txt');
   
-  //  scanGrid(code);
   interactive(code);
 }
 
@@ -50,7 +49,7 @@ WALK
 
 // Additionally, don't jump prematurely when 5th square empty (so would immediately jump again) and 8th also empty (nowhere to land)
 // i.e. !(A . B . C) . D . !(!E . !H) 
-// = (!A + !B + !C) . D . (E + H)
+// = (!A + !B + !C) . ((E + H) . D)
 const scriptPart2 = `OR A T
 AND B T
 AND C T
