@@ -14,28 +14,43 @@ async function runNetwork(code: bigint[]) {
     for (let i = 0; i < 50; i++) {
         const queue: bigint[] = [BigInt(i)];
         machineQueues.push(queue);
-        machines.push(new Machine([...code], getInput(queue)));
+        machines.push(new Machine([...code], getInput(nat, i, queue)));
     }
+    nat.firstQueue = machineQueues[0];
 
     while (true) {
+        if (nat.isIdle()) {
+            if (nat.deliveredY.includes(nat.y)) {
+                console.log(`First repeat: ${nat.y}`);
+                return;
+            }
+            nat.sendMessage(machineQueues[0]);
+        }
         for (let i = 0; i < 50; i++) {
             const value = await threeOrNoOutputs(machines[i]);
             if (value !== undefined) {
+                nat.resetCounters();
                 const [target, x, y] = value;
                 if (target >= 0 && target < 50) {
                     machineQueues[target].push(x);
                     machineQueues[target].push(y);
                 } else if (target === 255) {
-                    console.log(y);
-                    return;
+                    nat.x = x;
+                    nat.y = y;
                 }
             }
         }
     }
 }
 
-const getInput = (nat: NAT, queue: bigint[]) => () => {
-    Promise.resolve(queue.shift() ?? -1n);
+const getInput = (nat: NAT, i: number, queue: bigint[]) => () => {
+    const value = queue.shift();
+    if (value === undefined) {
+        nat.idleMachines[i]++;
+    } else {
+        nat.idleMachines[i] = 0;
+    }
+    return Promise.resolve(value ?? -1n);
 }
 
 async function threeOrNoOutputs(machine: Machine): Promise<[number, bigint, bigint] | undefined> {
@@ -55,10 +70,29 @@ async function runUntilOutput(machine: Machine): Promise<bigint> {
 }
 
 class NAT {
-    idleMachines: number[]
+    n: number;
+    idleMachines: number[] = [];
+
+    x: bigint = 0n;
+    y: bigint = 0n;
+
+    firstQueue: bigint[] = [];
+    deliveredY: bigint[] = [];
 
     constructor(n: number) {
-        this.idleMachines = new Array(n).fill(0);
+        this.n = n;
+        this.resetCounters();
+    }
+
+    resetCounters() {
+        this.idleMachines = new Array(this.n).fill(0);
+    }
+
+    sendMessage(queue: bigint[]) {
+        queue.push(this.x);
+        queue.push(this.y);
+        this.deliveredY.push(this.y);
+        this.resetCounters();
     }
 
     isIdle(): boolean {
