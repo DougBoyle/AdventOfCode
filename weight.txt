@@ -1,0 +1,23 @@
+All items:
+monolith, ornament, easter egg, candy, cat6
+ornament, candy, easter egg, cat6
+
+Too Light:
+monolith, ornament, easter egg
+planetoid, candy cane, ornament, easter egg, spool of cat6, hypercube
+
+Correct: monolith, ornament, easter egg, hypercube
+
+Too Heavy:
+monolith, ornament, easter egg, planetoid, hypercube
+candy, monolith
+cat6, monolith
+easter egg, cat6, monolith
+
+
+
+
+Order (lightest -> heaviest):
+ornament, easter egg
+candy, cat6
+monolith
